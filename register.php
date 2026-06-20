@@ -1,3 +1,34 @@
+<?php
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+        session_start();
+        //require_once 'db.php';
+        $mysqli = new mysqli('localhost', 'root', '', 'TKO-Portal_db');
+        if ($mysqli->connect_error) {
+            die("Connection failed: " . $mysqli->connect_error);
+        }    
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $name = $_POST['name'];
+            $email = $_POST['email'];
+            $hashedPassword = password_hash($_POST['password'], PASSWORD_DEFAULT);
+            $role = $_POST['role'];
+            $checkEmail=$mysqli->query("SELECT email FROM users WHERE email='$email'");
+            if ($checkEmail->num_rows===0) {
+                $mysqli->query("INSERT INTO users (name, email, pass, role) VALUES ('$name', '$email', '$hashedPassword', '$role')");
+                if ($role === 'fighter') {
+                    header("Location: fighter.php"); //remember to fix this 
+                    exit();
+                } else if ($role === 'coach') {
+                    header("Location: coach.php");
+                    exit();
+                }
+            } else{
+                $message = "<div class='msg-box error' style='color: red;'>Email already exists. Please use a different email.</div>";
+            }
+            
+        }?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -172,9 +203,9 @@
     <form action="register.php" method="POST">
         <div class="form-group">
             <label for="name">Full Name</label>
-            <input type="text" id="name" name="name" class="input-control" placeholder="e.g., Khabib Nurmagomedov" required>
+            <input type="text" id="name" name="name" class="input-control" placeholder="e.g., Islam Makhachev" required>
         </div>
-        
+    
         <div class="form-group">
             <label for="email">Email Address</label>
             <input type="email" id="email" name="email" class="input-control" placeholder="name@example.com" required>
