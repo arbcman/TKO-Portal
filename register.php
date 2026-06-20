@@ -1,36 +1,39 @@
 <?php
-        ini_set('display_errors', 1);
-        ini_set('display_startup_errors', 1);
-        error_reporting(E_ALL);
-        session_start();
-        //require_once 'db.php';
-        $mysqli = new mysqli('localhost', 'root', '', 'TKO-Portal_db');
-        if ($mysqli->connect_error) {
-            die("Connection failed: " . $mysqli->connect_error);
-        }    
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+session_start();
+//require_once 'db.php';
+$mysqli = new mysqli('localhost', 'root', '', 'TKO-Portal_db');
+if ($mysqli->connect_error) {
+    die("Connection failed: " . $mysqli->connect_error);
+}
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = $_POST['name'];
-            $email = $_POST['email'];
-            $hashedPassword = password_hash($_POST['password'], PASSWORD_DEFAULT);
-            $role = $_POST['role'];
-            $checkEmail=$mysqli->query("SELECT email FROM users WHERE email='$email'");
-            if ($checkEmail->num_rows===0) {
-                $mysqli->query("INSERT INTO users (name, email, pass, role) VALUES ('$name', '$email', '$hashedPassword', '$role')");
-                if ($role === 'fighter') {
-                    header("Location: fighter.php"); //remember to fix this 
-                    exit();
-                } else if ($role === 'coach') {
-                    header("Location: coach.php");
-                    exit();
-                }
-            } else{
-                $message = "<div class='msg-box error' style='color: red;'>Email already exists. Please use a different email.</div>";
-            }
-            
-        }?>
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $hashedPassword = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $role = $_POST['role'];
+    $checkEmail = $mysqli->query("SELECT email FROM users WHERE email='$email'");
+    if ($checkEmail->num_rows === 0) {
+        $mysqli->query("INSERT INTO users (name, email, pass, role) VALUES ('$name', '$email', '$hashedPassword', '$role')");
+        if ($role === 'fighter') {
+            $sportType = $_POST['sport_type'];
+            $weightClass = $_POST['weight_class'];
+            $mysqli->query("INSERT INTO fighter_profile (id,user_id,sport,weight_kg)VALUES(NULL, LAST_INSERT_ID(), '$sportType', '$weightClass')");
+            header("Location: fighter.php");
+            exit();
+        } else if ($role === 'coach') {
+            header("Location: coach.php");
+            exit();
+        }
+    } else {
+        $message = "<div class='msg-box error' style='color: red;'>Email already exists. Please use a different email.</div>";
+    }
+} ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -188,50 +191,89 @@
         }
     </style>
 </head>
+
 <body>
 
-<div class="register-container">
-    <div class="brand-header">
-        <h1>TKO<span>PORTAL</span></h1>
-        <p>Combat Club Management</p>
+    <div class="register-container">
+        <div class="brand-header">
+            <h1>TKO<span>PORTAL</span></h1>
+            <p>Combat Club Management</p>
+        </div>
+
+        <?php if (!empty($message)): ?>
+            <div class="msg-box"><?php echo $message; ?></div>
+        <?php endif; ?>
+
+        <form action="register.php" method="POST">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" class="input-control" placeholder="e.g., Islam Makhachev" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="input-control" placeholder="name@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="input-control" placeholder="••••••••" required>
+            </div>
+
+            <div class="form-group">
+                <label for="role">System Access Role</label>
+                <select id="role" name="role" class="input-control" onchange="toggleFighterFields()" required>
+                    <option value="" disabled selected>Select your access tier...</option>
+                    <option value="fighter">Fighter (Track stats & matches)</option>
+                    <option value="coach">Coach (Manage rosters & logs)</option>
+                </select>
     </div>
 
-    <?php if (!empty($message)): ?>
-        <div class="msg-box"><?php echo $message; ?></div>
-    <?php endif; ?>
-    
-    <form action="register.php" method="POST">
+    <script>
+        function toggleFighterFields() {
+            var role = document.getElementById('role').value;
+            var extraFields = document.getElementById('fighter-extra-fields');
+            var sportInput = document.getElementById('sport_type');
+            var weightInput = document.getElementById('weight_class');
+
+            if (role === 'fighter') {
+                extraFields.style.display = 'block';
+                sportInput.required = true;
+                weightInput.required = true;
+            } else {
+                extraFields.style.display = 'none';
+                sportInput.required = false;
+                weightInput.required = false;
+            }
+        }
+    </script>
+
+    <div id="fighter-extra-fields" style="display: none;">
         <div class="form-group">
-            <label for="name">Full Name</label>
-            <input type="text" id="name" name="name" class="input-control" placeholder="e.g., Islam Makhachev" required>
-        </div>
-    
-        <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" name="email" class="input-control" placeholder="name@example.com" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" class="input-control" placeholder="••••••••" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="role">System Access Role</label>
-            <select id="role" name="role" class="input-control" required>
-                <option value="" disabled selected>Select your access tier...</option>
-                <option value="fighter">Fighter (Track stats & matches)</option>
-                <option value="coach">Coach (Manage rosters & logs)</option>
+            <label for="sport_type">Combat Discipline</label>
+            <select id="sport_type" name="sport_type" class="input-control">
+                <option value="" disabled selected>Select your discipline...</option>
+                <option value="Wrestling">Wrestling</option>
+                <option value="BJJ">BJJ (Jiu-Jitsu)</option>
+                <option value="muaythai">Muay Thai</option>
+
             </select>
         </div>
-        
-        <button type="submit" class="btn-submit">Initialize Account</button>
+
+        <div class="form-group">
+            <label for="weight_class">Weight Class (kg)</label>
+            <input type="number" id="weight_class" name="weight_class" class="input-control" placeholder="e.g., 74">
+        </div>
+    </div>
+
+    <button type="submit" class="btn-submit">Initialize Account</button>
     </form>
 
     <div class="form-footer">
         Already have an account? <a href="login.php">Log In</a>
     </div>
-</div>
+    </div>
 
 </body>
+
 </html>
