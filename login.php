@@ -1,7 +1,39 @@
-
-
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+session_start();
+$mysqli = new mysqli('localhost', 'root', '', 'TKO-Portal_db');
+if ($mysqli->connect_error) {
+    die("Connection failed: " . $mysqli->connect_error);
+}
+$message = "";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
+    $checking = $mysqli->query("SELECT email, pass ,role FROM users WHERE email='$email'");
+    if ($checking->num_rows == 1) {
+        $_SESSION['email'] = $email;
+        $user = $checking->fetch_assoc();
+        if (password_verify($password, $user['pass'])) {
+            $role = $user['role'];
+            $_SESSION['role'] = $role;
+            if ($role === 'fighter') {
+                header("Location: dashboards/fighter.php");
+                exit();
+            } else if ($role === 'coach') {
+                header("Location: dashboards/coach.php");
+                exit();
+            }
+        }
+    }
+    
+    $message = "<div class='msg-box error' style='color: #ff3333; text-align: center; margin-bottom: 20px; font-weight: 600; font-size: 0.9rem;'>Invalid email or password. Please try again.</div>";
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -140,32 +172,36 @@
         }
     </style>
 </head>
+
 <body>
 
-<div class="login-container">
-    <div class="brand-header">
-        <h1>TKO<span>PORTAL</span></h1>
-        <p>Secure Access Gateway</p>
-    </div>
-    
-    <form action="dashboard.php" method="POST">
-        <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" name="email" class="input-control" placeholder="name@example.com" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" class="input-control" placeholder="••••••••" required> 
+    <div class="login-container">
+        <div class="brand-header">
+            <h1>TKO<span>PORTAL</span></h1>
+            <p>Secure Access Gateway</p>
         </div>
 
-        <button type="submit" class="btn-submit">AUTHENTICATE ACCOUNT</button>
-    </form>
+        <?php if (!empty($message)) echo $message; ?>
 
-    <div class="form-footer">
-        New candidate to the roster? <a href="register.php">Create Account</a>
+        <form action="login.php" method="POST">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="input-control" placeholder="name@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="input-control" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn-submit">AUTHENTICATE ACCOUNT</button>
+        </form>
+
+        <div class="form-footer">
+            New candidate to the roster? <a href="register.php">Create Account</a>
+        </div>
     </div>
-</div>
 
 </body>
+
 </html>

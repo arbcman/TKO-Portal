@@ -291,7 +291,14 @@
             <a href="#" class="menu-item">Roster Ranks</a>
         </nav>
         <div class="aside-footer">
-            <a href="index.php" class="btn-logout">Exit Session</a>
+            <a href="login.php" class="btn-logout">Exit Session</a>
+            <?php
+                if (isset($_GET['logout'])) {
+                session_destroy();
+                header("Location: login.php");
+                exit();
+                }
+            ?>
         </div>
     </aside>
 
