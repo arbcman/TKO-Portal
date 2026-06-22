@@ -21,10 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sportType = $_POST['sport_type'];
             $weightClass = $_POST['weight_class'];
             $mysqli->query("INSERT INTO fighter_profile (id,user_id,sport,weight_kg)VALUES(NULL, LAST_INSERT_ID(), '$sportType', '$weightClass')");
-            header("Location: fighter.php");
+            header("Location: dashboards/fighter.php");
             exit();
         } else if ($role === 'coach') {
-            header("Location: coach.php");
+            header("Location: dashboards/coach.php");
             exit();
         }
     } else {
